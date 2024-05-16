@@ -1,6 +1,6 @@
 from pathlib import Path
 from matplotlib.image import imread, imsave
-
+import random
 
 def rgb2gray(rgb):
     r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
@@ -26,7 +26,10 @@ class Img:
         return new_path
 
     def blur(self, blur_level=16):
-
+        """
+        Applies a blur filter on the image and saves it to be sent back to the user
+        :return:
+        """
         height = len(self.data)
         width = len(self.data[0])
         filter_sum = blur_level ** 2
@@ -43,6 +46,10 @@ class Img:
         self.data = result
 
     def contour(self):
+        """
+        Applies a contour filter on the image and saves it to be sent back to the user
+        :return:
+        """
         for i, row in enumerate(self.data):
             res = []
             for j in range(1, len(row)):
@@ -51,17 +58,64 @@ class Img:
             self.data[i] = res
 
     def rotate(self):
-        # TODO remove the `raise` below, and write your implementation
-        raise NotImplementedError()
+        """
+        Rotates the image and saves it to be sent back to the user
+        :return:
+        """
+        if not self.data:
+            raise RuntimeError("Image data is empty")
+        self.data = [list(row) for row in zip(*self.data[::-1])]
 
-    def salt_n_pepper(self):
-        # TODO remove the `raise` below, and write your implementation
-        raise NotImplementedError()
+    def salt_n_pepper(self, salt_prob=0.05, pepper_prob=0.05):
+        """
+        Applies a salt & pepper filter on the image and saves it to be sent back to the user
+        :return:
+        """
+        height = len(self.data)
+        width = len(self.data[0])
+        for i in range(height):
+            for j in range(width):
+                rand = random.random()
+                if rand < salt_prob:
+                    self.data[i][j] = 255
+                elif rand < salt_prob + pepper_prob:
+                    self.data[i][j] = 0
 
-    def concat(self, other_img, direction='horizontal'):
-        # TODO remove the `raise` below, and write your implementation
-        raise NotImplementedError()
+    def concat(self, other_img, direction='/horizontal'):
+        """
+        merges 2 images into a collage either horizontally or vertically according to the user's choice and saves it to be sent back to the user
+        :return:
+        """
+        if direction == '/horizontal':
+            try:
+                if len(self.data) != len(other_img.data):
+                    raise RuntimeError("Images must have the same height for horizontal concatenation")
+                self.data = [row1 + row2 for row1, row2 in zip(self.data, other_img.data)]
+            except RuntimeError as e:
+                error_message = str(e)
+                return error_message, 500
+        elif direction == '/vertical':
+            try:
+                if len(self.data[0]) != len(other_img.data[0]):
+                    raise RuntimeError("Images must have the same width for vertical concatenation")
+                self.data += other_img.data
+            except RuntimeError as e:
+                error_message = str(e)
+                return error_message, 500
+        else:
+            return "Invalid direction for concatenation. Must be 'horizontal' or 'vertical'.", 500
+        return "Ok", 200
+
 
     def segment(self):
-        # TODO remove the `raise` below, and write your implementation
-        raise NotImplementedError()
+        """
+        Applies a segment filter on the image and saves it to be sent back to the user
+        :return:
+        """
+        if not self.data:
+            raise RuntimeError("Image data is empty")
+        total_pixels = sum(sum(row) for row in self.data)
+        average = total_pixels // (len(self.data) * len(self.data[0]))
+        for i, row in enumerate(self.data):
+            self.data[i] = [0 if pixel < average else 255 for pixel in row]
+
